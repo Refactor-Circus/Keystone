@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace RefactorCircus\Keystone\Models\Concerns;
 
 use Illuminate\Support\Str;
+use Illuminate\Support\Testing\Fakes\EventFake;
+use RefactorCircus\Keystone\Contracts\ModelLifecycleEvent;
 
 /**
  * Dispatch a class-based event for every Eloquent lifecycle hook.
@@ -18,7 +20,9 @@ use Illuminate\Support\Str;
  * A subclass of a package model, such as an application's `TeamDashboard
  * extends DashboardModel`, fires the package model's events, so listeners see
  * every dashboard whatever class it hydrates as. Entries a model declares on
- * `$dispatchesEvents` itself win over the derived ones.
+ * `$dispatchesEvents` itself win over the derived ones. The `retrieved` event,
+ * which fires for every model loaded, is only dispatched while something
+ * listens for it.
  */
 trait DispatchesModelEvents
 {
@@ -44,6 +48,31 @@ trait DispatchesModelEvents
         // entries, so the merged map is the same for every instance.
         $this->dispatchesEvents = self::$derivedModelEvents[static::class]
             ??= array_merge(self::deriveModelEvents(), $this->dispatchesEvents);
+    }
+
+    /**
+     * `retrieved` fires for every model hydrated, so its event is only built
+     * and dispatched while something listens: to the event itself, or to
+     * every lifecycle event through ModelLifecycleEvent. Always under
+     * `Event::fake()`, so tests can assert it. A wildcard listener (`*`,
+     * as debug tooling registers) counts as listening, so with one present
+     * the event is built for every model hydrated - that listener asked for
+     * every event.
+     *
+     * @param  string  $event
+     * @param  'until'|'dispatch'  $method
+     * @return mixed
+     */
+    protected function fireCustomModelEvent($event, $method)
+    {
+        if ($event === 'retrieved' && isset($this->dispatchesEvents['retrieved']) && static::$dispatcher !== null
+            && ! static::$dispatcher instanceof EventFake
+            && ! static::$dispatcher->hasListeners($this->dispatchesEvents['retrieved'])
+            && ! static::$dispatcher->hasListeners(ModelLifecycleEvent::class)) {
+            return null;
+        }
+
+        return parent::fireCustomModelEvent($event, $method);
     }
 
     /**

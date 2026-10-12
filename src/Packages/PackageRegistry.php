@@ -20,8 +20,18 @@ final class PackageRegistry
      */
     private array $packages = [];
 
+    /**
+     * The package each class looked up so far belongs to, cleared whenever a
+     * package registers: base classes ask on every request, tool and entry.
+     *
+     * @var array<string, ?Package>
+     */
+    private array $owners = [];
+
     public function register(Package $package): Package
     {
+        $this->owners = [];
+
         return $this->packages[$package->key] = $package;
     }
 
@@ -48,15 +58,21 @@ final class PackageRegistry
      */
     public function for(object|string $class): ?Package
     {
+        $name = is_object($class) ? $class::class : $class;
+
+        if (array_key_exists($name, $this->owners)) {
+            return $this->owners[$name];
+        }
+
         $match = null;
 
         foreach ($this->packages as $package) {
-            if ($package->owns($class) && strlen($package->namespace) > strlen($match->namespace ?? '')) {
+            if ($package->owns($name) && strlen($package->namespace) > strlen($match->namespace ?? '')) {
                 $match = $package;
             }
         }
 
-        return $match;
+        return $this->owners[$name] = $match;
     }
 
     /**

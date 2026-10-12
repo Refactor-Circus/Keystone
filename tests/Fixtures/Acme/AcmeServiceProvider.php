@@ -32,5 +32,6 @@ final class AcmeServiceProvider extends PackageServiceProvider
         $this->registerMcpServer();
         $this->registerCortex();
         $this->loadHistoryRoutes();
+        $this->registerNotFoundResponses();
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace RefactorCircus\Keystone\Http\Requests;
 
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Http\FormRequest;
 use RefactorCircus\Keystone\Auth\Authorizer;
@@ -36,6 +37,29 @@ abstract class Request extends FormRequest
     public function rules(): array
     {
         return [];
+    }
+
+    /**
+     * Guests get a 401, signed-in users without the ability a 403.
+     */
+    protected function failedAuthorization(): void
+    {
+        if ($this->isGuest()) {
+            throw new AuthenticationException;
+        }
+
+        parent::failedAuthorization();
+    }
+
+    /**
+     * Whether the caller is unidentified, so a refusal asks them to sign in
+     * (401) rather than telling them no (403). No Laravel user by default; a
+     * request whose callers identify another way, such as by a subscriber's
+     * own credentials, answers for itself.
+     */
+    protected function isGuest(): bool
+    {
+        return $this->user() === null;
     }
 
     /**

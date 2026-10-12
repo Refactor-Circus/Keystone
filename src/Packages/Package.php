@@ -6,9 +6,11 @@ namespace RefactorCircus\Keystone\Packages;
 
 use Closure;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Contracts\Config\Repository;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Laravel\Mcp\Server;
+use RefactorCircus\Keystone\Audit\Contracts\AuditTrail;
 
 /**
  * One package of the suite, as the shared runtime knows it.
@@ -113,6 +115,18 @@ final class Package
     public function allowsHistory(?Authenticatable $user, Model|string|null $subject = null): bool
     {
         return $this->historyCheck === null || ($this->historyCheck)($user, $subject) === true;
+    }
+
+    /**
+     * Whether the package records to and reads from the suite's audit log:
+     * only while one is installed (refactor-circus/keen), and unless the
+     * package's `audit.enabled` config key turns it off. While it does not,
+     * its history route and tool are not offered at all.
+     */
+    public function audits(): bool
+    {
+        return app(Repository::class)->get($this->configKey('audit.enabled'), true) !== false
+            && app(AuditTrail::class)->available();
     }
 
     /**

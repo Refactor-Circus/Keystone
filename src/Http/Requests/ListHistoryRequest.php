@@ -33,6 +33,10 @@ final class ListHistoryRequest extends Request
             return new JsonResponse(['message' => 'No audit log is installed. Install refactor-circus/keen to record history.'], 404);
         }
 
+        if (! $this->package()->audits()) {
+            return new JsonResponse(['message' => 'Auditing is turned off for this package.'], 404);
+        }
+
         /** @var array<string, mixed> $validated */
         $validated = $this->validated();
 

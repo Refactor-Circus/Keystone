@@ -5,9 +5,11 @@ declare(strict_types=1);
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\Gate;
+use Laravel\Mcp\Server\Transport\FakeTransporter;
 use RefactorCircus\Keystone\Audit\Contracts\AuditTrail;
 use RefactorCircus\Keystone\Audit\Data\AuditEntry;
 use RefactorCircus\Keystone\Packages\PackageRegistry;
+use RefactorCircus\Keystone\Testing\StructuredSchema;
 use RefactorCircus\Keystone\Tests\Fixtures\Acme\Domains\Widget\Models\WidgetModel;
 use RefactorCircus\Keystone\Tests\Fixtures\Acme\Mcp\AcmeServer;
 use RefactorCircus\Keystone\Tests\Fixtures\Acme\Mcp\Tools\ListAcmeHistoryTool;
@@ -88,14 +90,24 @@ it('guards the whole history with viewAuditLog when the application defines it',
 });
 
 it('offers the same history as an mcp tool', function (): void {
-    AcmeServer::tool(ListAcmeHistoryTool::class)
-        ->assertHasErrors(['No audit log is installed, so there is no history to show. Install refactor-circus/keen to record it.']);
+    $offered = fn (): bool => (new AcmeServer(new FakeTransporter))->createContext()->tools()
+        ->contains(fn (mixed $tool): bool => $tool instanceof ListAcmeHistoryTool);
+
+    // Without an audit log the tool is not offered at all.
+    expect($offered())->toBeFalse();
 
     installAuditTrail();
 
-    AcmeServer::tool(ListAcmeHistoryTool::class)
+    expect($offered())->toBeTrue();
+
+    $response = AcmeServer::tool(ListAcmeHistoryTool::class)
         ->assertOk()
         ->assertSee('widget.created');
+
+    /** @var array{result: array{structuredContent: array<string, mixed>}} $payload */
+    $payload = (fn (): array => $this->response->toArray())->call($response);
+
+    expect(StructuredSchema::violations(app(ListAcmeHistoryTool::class)->toArray()['outputSchema'] ?? [], $payload['result']['structuredContent']))->toBe([]);
 
     expect(app(ListAcmeHistoryTool::class)->name())->toBe('list-acme-history-tool');
 });
@@ -119,7 +131,11 @@ it('applies the package own history check', function (): void {
 
     app(PackageRegistry::class)->get('acme')->authorizeHistory(fn (): bool => false);
 
-    $this->getJson('/acme/history')->assertForbidden();
+    // A guest is unauthenticated; a signed-in user the rule refuses is forbidden.
+    $this->getJson('/acme/history')->assertUnauthorized();
+    $this->actingAs(User::forceCreate(['name' => 'Ada', 'email' => 'ada@example.com', 'password' => 'secret']))
+        ->getJson('/acme/history')
+        ->assertForbidden();
 });
 
 it('lets the package rule decide in place of policies', function (): void {
@@ -141,4 +157,14 @@ it('lets the package rule decide in place of policies', function (): void {
         ->assertOk();
 
     expect($seen[0])->toBeInstanceOf(WidgetModel::class);
+});
+
+it('offers no history while the package turns auditing off', function (): void {
+    installAuditTrail();
+    config()->set('acme.audit.enabled', false);
+
+    $this->getJson('/acme/history')->assertNotFound()->assertJsonPath('message', 'Auditing is turned off for this package.');
+
+    expect((new AcmeServer(new FakeTransporter))->createContext()->tools()->contains(fn (mixed $tool): bool => $tool instanceof ListAcmeHistoryTool))->toBeFalse()
+        ->and(app(PackageRegistry::class)->get('acme')->audits())->toBeFalse();
 });

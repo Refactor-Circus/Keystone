@@ -27,6 +27,14 @@ it('lets a package name a more specific route prefix', function (): void {
         ->and(surfaceForRoute('acme.widgets.store'))->toBe('http');
 });
 
+it('picks up a prefix named after the first lookup', function (): void {
+    expect(surfaceForRoute('acme.scim.users'))->toBe('http');
+
+    app(Surface::class)->route('acme.scim.', 'scim');
+
+    expect(surfaceForRoute('acme.scim.users'))->toBe('scim');
+});
+
 it('falls back to cli in the console', function (): void {
     expect(app(Surface::class)->current())->toBe('cli');
 });

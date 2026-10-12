@@ -30,6 +30,16 @@ final class Surface
      */
     private array $routes = [];
 
+    /**
+     * The route prefixes, most specific first, built on first use and
+     * rebuilt when a prefix is named or a package registers.
+     *
+     * @var array<string, string>|null
+     */
+    private ?array $prefixes = null;
+
+    private int $packageCount = 0;
+
     public function __construct(
         private readonly Application $app,
         private readonly PackageRegistry $packages,
@@ -41,6 +51,7 @@ final class Surface
     public function route(string $prefix, string $surface): self
     {
         $this->routes[$prefix] = $surface;
+        $this->prefixes = null;
 
         return $this;
     }
@@ -117,9 +128,29 @@ final class Surface
 
     private function forRoute(string $name): ?string
     {
+        foreach ($this->prefixes() as $prefix => $surface) {
+            if (str_starts_with($name, $prefix)) {
+                return $surface;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function prefixes(): array
+    {
+        $packages = $this->packages->all();
+
+        if ($this->prefixes !== null && count($packages) === $this->packageCount) {
+            return $this->prefixes;
+        }
+
         $prefixes = $this->routes;
 
-        foreach ($this->packages->all() as $package) {
+        foreach ($packages as $package) {
             $prefixes[$package->key.'.'] ??= 'http';
         }
 
@@ -128,12 +159,8 @@ final class Surface
         // The most specific prefix wins: `roster.scim.` before `roster.`.
         uksort($prefixes, fn (string $a, string $b): int => strlen($b) <=> strlen($a));
 
-        foreach ($prefixes as $prefix => $surface) {
-            if (str_starts_with($name, $prefix)) {
-                return $surface;
-            }
-        }
+        $this->packageCount = count($packages);
 
-        return null;
+        return $this->prefixes = $prefixes;
     }
 }

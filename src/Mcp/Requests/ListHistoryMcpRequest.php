@@ -32,6 +32,10 @@ final class ListHistoryMcpRequest extends Request
             return Response::error('No audit log is installed, so there is no history to show. Install refactor-circus/keen to record it.');
         }
 
+        if (! $this->package()->audits()) {
+            return Response::error('Auditing is turned off for this package.');
+        }
+
         $page = $history->page($this->package(), $validated);
 
         return $this->structuredCollection(

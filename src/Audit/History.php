@@ -13,6 +13,7 @@ use RefactorCircus\Keystone\Audit\Data\AuditFilter;
 use RefactorCircus\Keystone\Audit\Data\AuditPage;
 use RefactorCircus\Keystone\Auth\Authorizer;
 use RefactorCircus\Keystone\Packages\Package;
+use RefactorCircus\Keystone\Pagination\Pagination;
 
 /**
  * A package's own audit history, as its JSON API and MCP server serve it.
@@ -35,6 +36,14 @@ final readonly class History
     ) {}
 
     /**
+     * History pages by cursor, newest first.
+     */
+    public static function pagination(): Pagination
+    {
+        return Pagination::cursor(default: 25);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public static function rules(): array
@@ -43,9 +52,7 @@ final readonly class History
             'subject_type' => ['nullable', 'string', 'max:191', 'required_with:subject_id'],
             'subject_id' => ['nullable', 'string', 'max:191', 'required_with:subject_type'],
             'action' => ['nullable', 'string', 'max:191'],
-            'cursor' => ['nullable', 'string'],
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
-        ];
+        ] + self::pagination()->rules();
     }
 
     public function available(): bool
@@ -95,7 +102,7 @@ final readonly class History
             ->subjectKey($this->string($validated, 'subject_type'), $this->string($validated, 'subject_id'))
             ->action($this->string($validated, 'action'))
             ->cursor($this->string($validated, 'cursor'))
-            ->limit(is_numeric($validated['per_page'] ?? null) ? (int) $validated['per_page'] : 25));
+            ->limit(is_numeric($validated['per_page'] ?? null) ? (int) $validated['per_page'] : self::pagination()->default));
     }
 
     /**

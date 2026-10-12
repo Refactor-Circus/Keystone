@@ -5,6 +5,11 @@ declare(strict_types=1);
 namespace RefactorCircus\Keystone\Support;
 
 use Illuminate\Contracts\Config\Repository;
+use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Foundation\Exceptions\Handler;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Laravel\Mcp\Facades\Mcp;
@@ -13,6 +18,7 @@ use RefactorCircus\Keystone\Http\Controllers\HistoryController;
 use RefactorCircus\Keystone\KeystoneServiceProvider;
 use RefactorCircus\Keystone\Packages\Package;
 use RefactorCircus\Keystone\Packages\PackageRegistry;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Base class for a package's main service provider.
@@ -20,7 +26,8 @@ use RefactorCircus\Keystone\Packages\PackageRegistry;
  * The package describes itself once in `definition()` and registers that
  * definition first thing in `register()`, through `registerPackage()`. The
  * helpers below then read everything else - policies, MCP routes, the Atrium
- * switch - from the package's config file, which every package in the suite
+ * switch - from the package's config file (`registerNotFoundResponses()` needs
+ * none), which every package in the suite
  * shapes the same way:
  *
  *     authorization, policies, routes{enabled,prefix,middleware},
@@ -116,8 +123,9 @@ abstract class PackageServiceProvider extends ServiceProvider
 
     /**
      * Serve `GET {prefix}/history`: the package's audit entries, newest first,
-     * inside its JSON API route group. Answers 404 while refactor-circus/keen is not
-     * installed.
+     * inside its JSON API route group. Answers 404 unless the package audits
+     * (see `Package::audits()`): asked when called, since whether an audit log
+     * is installed is only known once every provider has registered.
      */
     protected function loadHistoryRoutes(): void
     {
@@ -125,6 +133,34 @@ abstract class PackageServiceProvider extends ServiceProvider
 
         $this->loadApiRoutesFrom(function () use ($key): void {
             Route::get('history', HistoryController::class)->name('history.index')->defaults('package', $key);
+        });
+    }
+
+    /**
+     * Missing records on the package's own routes (named `{key}.`) answer a
+     * plain `{"message": "Not found."}` 404, as its MCP tools do, when the
+     * caller asked for JSON. Laravel's default message names the model class,
+     * which callers need not see. Pages (HTML requests) keep Laravel's 404.
+     * Applications that swap in their own exception handler keep theirs.
+     */
+    protected function registerNotFoundResponses(): void
+    {
+        $prefix = $this->package()->key.'.';
+
+        $this->callAfterResolving(ExceptionHandler::class, function (mixed $handler) use ($prefix): void {
+            if (! $handler instanceof Handler) {
+                return;
+            }
+
+            $handler->renderable(function (NotFoundHttpException $exception, Request $request) use ($prefix): ?JsonResponse {
+                $name = $request->route()?->getName();
+
+                if (! $request->expectsJson() || ! is_string($name) || ! str_starts_with($name, $prefix) || ! $exception->getPrevious() instanceof ModelNotFoundException) {
+                    return null;
+                }
+
+                return new JsonResponse(['message' => __('Not found.')], 404);
+            });
         });
     }
 

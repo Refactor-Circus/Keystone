@@ -7,6 +7,7 @@ namespace RefactorCircus\Keystone\Mcp\Tools;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
+use RefactorCircus\Keystone\Audit\History;
 use RefactorCircus\Keystone\Mcp\Requests\ListHistoryMcpRequest;
 use RefactorCircus\Keystone\Mcp\Tool;
 
@@ -44,8 +45,31 @@ abstract class ListHistoryTool extends Tool
             'subject_type' => $schema->string()->description('Morph type of the record whose history to list, with subject_id.'),
             'subject_id' => $schema->string()->description('Key of the record whose history to list, with subject_type.'),
             'action' => $schema->string()->description('Only entries of this action, such as product.updated.'),
-            'cursor' => $schema->string()->description('Cursor from a previous page (next_cursor).'),
-            'per_page' => $schema->integer()->description('Results per page, up to 100.')->min(1)->max(100),
+        ] + History::pagination()->schema($schema);
+    }
+
+    public function outputSchema(JsonSchema $schema): array
+    {
+        return [
+            'data' => $schema->array()->items($schema->object([
+                'id' => $schema->union(['integer', 'string'])->required(),
+                'source' => $schema->string()->description('The package that recorded it.')->required(),
+                'action' => $schema->string()->required(),
+                'surface' => $schema->string()->required(),
+                'actor' => $schema->object([
+                    'id' => $schema->string()->required(),
+                    'label' => $schema->string()->nullable()->required(),
+                ])->nullable()->required(),
+                'subject' => $schema->object([
+                    'type' => $schema->string()->required(),
+                    'id' => $schema->string()->nullable()->required(),
+                    'label' => $schema->string()->nullable()->required(),
+                ])->nullable()->required(),
+                'changes' => $schema->object()->description('field => [old, new].')->required(),
+                'context' => $schema->object()->required(),
+                'created_at' => $schema->string()->required(),
+            ]))->required(),
+            'next_cursor' => $schema->string()->nullable()->description('Pass as cursor for the next page; null on the last.')->required(),
         ];
     }
 }

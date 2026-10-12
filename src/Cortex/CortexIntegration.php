@@ -18,6 +18,7 @@ use RefactorCircus\Cortex\Domains\McpServer\Services\McpInstructionOverrides;
 use RefactorCircus\Cortex\Domains\McpServer\Services\McpServerRegistry;
 use RefactorCircus\Cortex\Domains\Tool\Services\ToolDescriptionOverrides;
 use RefactorCircus\Cortex\Domains\Tool\Services\ToolRegistry;
+use RefactorCircus\Keystone\Mcp\Server;
 use RefactorCircus\Keystone\Packages\Package;
 use RefactorCircus\Keystone\Support\Surface;
 
@@ -167,14 +168,25 @@ final readonly class CortexIntegration
 
         $events = $this->app->make(Dispatcher::class);
 
-        $events->listen(InvokingTool::class, function (InvokingTool $event): void {
-            if ($this->owns(ToolNameResolver::resolve($event->tool))) {
+        // Every package listens to every agent tool call, so the names of
+        // the server's tools are resolved once, on the first call, and kept:
+        // they only change on deploy.
+        $names = null;
+
+        $owns = function (string $tool) use (&$names): bool {
+            $names ??= $this->toolNames();
+
+            return isset($names[$tool]);
+        };
+
+        $events->listen(InvokingTool::class, function (InvokingTool $event) use ($owns): void {
+            if ($owns(ToolNameResolver::resolve($event->tool))) {
                 $this->app->make(Surface::class)->enter('cortex');
             }
         });
 
-        $leave = function (ToolInvoked|ToolFailed $event): void {
-            if ($this->owns(ToolNameResolver::resolve($event->tool))) {
+        $leave = function (ToolInvoked|ToolFailed $event) use ($owns): void {
+            if ($owns(ToolNameResolver::resolve($event->tool))) {
                 $this->app->make(Surface::class)->leave();
             }
         };
@@ -183,21 +195,32 @@ final readonly class CortexIntegration
         $events->listen(ToolFailed::class, $leave);
     }
 
-    private function owns(string $tool): bool
+    /**
+     * The names of every tool on the server, as a set. The history tool is
+     * included whether or not the package audits: a tool that is not
+     * offered is never invoked, so it cannot claim a call by mistake.
+     *
+     * @return array<string, true>
+     */
+    private function toolNames(): array
     {
-        foreach ($this->allTools() as $class) {
-            if ($this->app->make($class)->name() === $tool) {
-                return true;
+        $names = [];
+
+        foreach ($this->serverTools() as $class) {
+            $tool = $this->app->make($class);
+
+            if ($tool instanceof Tool) {
+                $names[$tool->name()] = true;
             }
         }
 
-        return false;
+        return $names;
     }
 
     /**
      * @return array<int, class-string<Tool>>
      */
-    private function allTools(): array
+    private function serverTools(): array
     {
         $server = $this->package->server;
 
@@ -209,5 +232,16 @@ final readonly class CortexIntegration
         $tools = constant($server.'::TOOLS');
 
         return $tools;
+    }
+
+    /**
+     * @return array<int, class-string<Tool>>
+     */
+    private function allTools(): array
+    {
+        $tools = $this->serverTools();
+
+        // The history tool only while the package audits, as on its server.
+        return $this->package->audits() ? $tools : array_values(Server::withoutHistory($tools));
     }
 }

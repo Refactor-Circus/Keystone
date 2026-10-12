@@ -15,6 +15,14 @@ final class StoreWidgetRequest extends Request
         return parent::authorize() && $this->allows('create', WidgetModel::class);
     }
 
+    /**
+     * Callers holding an Acme key identify themselves without signing in.
+     */
+    protected function isGuest(): bool
+    {
+        return parent::isGuest() && ! $this->hasHeader('X-Acme-Key');
+    }
+
     public function rules(): array
     {
         return ['name' => ['required', 'string']];
