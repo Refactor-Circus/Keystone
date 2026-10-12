@@ -76,8 +76,21 @@ final class McpTools
             self::assertMatchesSchema($primitive, (array) $result['structuredContent']);
         }
 
+        /** @var array<int, array<string, mixed>> $content */
+        $content = $result['content'] ?? [];
+
+        // Since laravel/mcp 1.0.2, execute_tools leaves out the JSON text copy of
+        // structured content that a direct tools/call carries, so put it back.
+        if (isset($result['structuredContent'])) {
+            $mirror = json_encode($result['structuredContent'], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+            if (! in_array($mirror, array_column($content, 'text'), true)) {
+                $content[] = ['type' => 'text', 'text' => $mirror];
+            }
+        }
+
         return new TestResponse($primitive, JsonRpcResponse::result(1, array_filter([
-            'content' => $result['content'] ?? [],
+            'content' => $content,
             'structuredContent' => $result['structuredContent'] ?? null,
             'isError' => $result['isError'] ?? false,
         ], fn (mixed $value): bool => $value !== null)));
