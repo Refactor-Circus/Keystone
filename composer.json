@@ -105,5 +105,8 @@
     "suggest": {
         "laravel/mcp": "Required for the MCP request, tool and server base classes (^1.0).",
         "laravel/ai": "Marks changes Cortex agents make through package tools with the cortex surface (^1.0)."
+    },
+    "conflict": {
+        "brianium/paratest": ">=7.26.1"
     }
 }
