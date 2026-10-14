@@ -9,3 +9,5 @@ composer.lock
 .DS_Store
 .idea
 .vscode
+composer.local.json
+composer.local.lock

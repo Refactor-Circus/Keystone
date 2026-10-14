@@ -84,6 +84,16 @@
         ],
         "clear": [
             "@php vendor/bin/testbench package:purge-skeleton --ansi"
+        ],
+        "local:install": [
+            "@php bin/composer-local.php",
+            "@putenv COMPOSER=composer.local.json",
+            "@composer install"
+        ],
+        "local:update": [
+            "@php bin/composer-local.php",
+            "@putenv COMPOSER=composer.local.json",
+            "@composer update"
         ]
     },
     "extra": {
