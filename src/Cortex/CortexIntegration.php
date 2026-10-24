@@ -14,8 +14,8 @@ use Laravel\Ai\Events\ToolInvoked;
 use Laravel\Ai\Tools\ToolNameResolver;
 use Laravel\Mcp\Server\Tool;
 use RefactorCircus\Cortex\CortexServiceProvider;
-use RefactorCircus\Cortex\Domains\McpServer\Services\McpInstructionOverrides;
-use RefactorCircus\Cortex\Domains\McpServer\Services\McpServerRegistry;
+use RefactorCircus\Cortex\Domains\ConcreteServer\Services\McpInstructionOverrides;
+use RefactorCircus\Cortex\Domains\ConcreteServer\Services\McpServerRegistry;
 use RefactorCircus\Cortex\Domains\Tool\Services\ToolDescriptionOverrides;
 use RefactorCircus\Cortex\Domains\Tool\Services\ToolRegistry;
 use RefactorCircus\Keystone\Mcp\Server;
@@ -40,6 +40,14 @@ use RefactorCircus\Keystone\Support\Surface;
  */
 final readonly class CortexIntegration
 {
+    /**
+     * Where Cortex keeps its MCP server services: the `ConcreteServer` domain,
+     * or the `McpServer` domain in releases before the rename.
+     */
+    private const string SERVER_SERVICES = 'RefactorCircus\\Cortex\\Domains\\ConcreteServer\\Services\\';
+
+    private const string LEGACY_SERVER_SERVICES = 'RefactorCircus\\Cortex\\Domains\\McpServer\\Services\\';
+
     public function __construct(
         private Application $app,
         private Config $config,
@@ -71,7 +79,8 @@ final readonly class CortexIntegration
 
         $server = $this->package->server;
 
-        $this->app->afterResolving(McpServerRegistry::class, function (McpServerRegistry $servers) use ($server): void {
+        $this->app->afterResolving(self::serverService('McpServerRegistry'), function (object $servers) use ($server): void {
+            /** @var McpServerRegistry $servers */
             if (! $servers->has($this->serverName())) {
                 $servers->register($this->serverName(), $server);
             }
@@ -143,9 +152,18 @@ final readonly class CortexIntegration
             return null;
         }
 
-        $name = $this->app->make(McpServerRegistry::class)->nameFor($this->package->server);
+        /** @var McpServerRegistry $servers */
+        $servers = $this->app->make(self::serverService('McpServerRegistry'));
+        $name = $servers->nameFor($this->package->server);
 
-        return $name === null ? null : $this->app->make(McpInstructionOverrides::class)->for($name);
+        if ($name === null) {
+            return null;
+        }
+
+        /** @var McpInstructionOverrides $overrides */
+        $overrides = $this->app->make(self::serverService('McpInstructionOverrides'));
+
+        return $overrides->for($name);
     }
 
     /**
@@ -154,6 +172,20 @@ final readonly class CortexIntegration
     public function description(string $tool): ?string
     {
         return $this->active() ? $this->app->make(ToolDescriptionOverrides::class)->for($tool) : null;
+    }
+
+    /**
+     * The class of one of Cortex's MCP server services, in the `ConcreteServer`
+     * domain, or in the `McpServer` domain when only that exists, so Keystone
+     * works with Cortex before and after the rename.
+     */
+    private static function serverService(string $service): string
+    {
+        $legacy = self::LEGACY_SERVER_SERVICES.$service;
+
+        return ! class_exists(self::SERVER_SERVICES.$service) && class_exists($legacy)
+            ? $legacy
+            : self::SERVER_SERVICES.$service;
     }
 
     /**
