@@ -1,0 +1,13 @@
+# Ring Master configuration. Every key is optional; only detected settings are written here.
+# Full schema and defaults: vendor/refactor-circus/ringside/README.md
+
+commands:
+  test: 'composer test:unit'
+  verify: 'composer test'
+  format: 'composer lint'
+  format_check: 'composer lint:check'
+standards:
+  global:
+    -
+      package: refactor-circus/standards
+      strict: true

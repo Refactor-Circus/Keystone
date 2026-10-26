@@ -1,0 +1,26 @@
+{
+    "hooks": {
+        "PostToolUse": [
+            {
+                "matcher": "Edit|Write",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "php \"$CLAUDE_PROJECT_DIR/vendor/refactor-circus/ringside/bin/ringside-hook\" post-edit 'vendor/bin/pint {file}'"
+                    }
+                ]
+            }
+        ],
+        "SessionStart": [
+            {
+                "matcher": "startup|resume",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "sh -c '[ -f \"$CLAUDE_PROJECT_DIR/vendor/refactor-circus/ringside/bin/ringside-hook\" ] && php \"$CLAUDE_PROJECT_DIR/vendor/refactor-circus/ringside/bin/ringside-hook\" session-start || echo \"ringside: vendor/ is missing; run composer install\"'"
+                    }
+                ]
+            }
+        ]
+    }
+}
