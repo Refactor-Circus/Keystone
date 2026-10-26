@@ -30,7 +30,9 @@
         "pestphp/pest": "^5.3.1",
         "pestphp/pest-plugin-laravel": "^5.0.1",
         "pestphp/pest-plugin-type-coverage": "^5.0.3",
-        "phpstan/extension-installer": "^1.4.3"
+        "phpstan/extension-installer": "^1.4.3",
+        "refactor-circus/ringside": "dev-main",
+        "refactor-circus/standards": "dev-main"
     },
     "autoload": {
         "psr-4": {
@@ -107,7 +109,8 @@
         "sort-packages": true,
         "allow-plugins": {
             "pestphp/pest-plugin": true,
-            "phpstan/extension-installer": true
+            "phpstan/extension-installer": true,
+            "refactor-circus/ringside": true
         }
     },
     "minimum-stability": "stable",
@@ -118,5 +121,15 @@
     },
     "conflict": {
         "brianium/paratest": ">=7.26.1"
-    }
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/Refactor-Circus/Ringside.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/Refactor-Circus/Standards.git"
+        }
+    ]
 }
