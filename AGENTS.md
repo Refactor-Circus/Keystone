@@ -32,3 +32,11 @@ This repository is a Laravel package. Keep the package focused, idiomatic, and e
 - `package-testing`: use when adding or changing package tests with Pest 4/5 and Orchestra Testbench.
 - `package-release`: use when preparing changelog, release notes, tags, or GitHub release workflow changes.
 - `package-compatibility`: use when reviewing code, dependencies, or CI against the PHP and Laravel support matrix.
+
+<!-- ring-master:start -->
+## Ring Master
+
+- Specs, product docs and local standards live in `docs/agent/`. Shared standards come from `vendor/` through `docs/agent/standards.index.yml`; read the matching standards before changing code.
+- Workflow: `/ring-master-shape-spec` → `/ring-master-write-spec` → `/ring-master-create-tasks` → `/ring-master-implement` → `/ring-master-verify-spec`.
+- Done means `composer test` passes. When work must break a standard, add a row to `docs/agent/standards-feedback.md`.
+<!-- ring-master:end -->
