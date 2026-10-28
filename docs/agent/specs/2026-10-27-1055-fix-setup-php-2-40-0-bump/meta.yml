@@ -1,0 +1,6 @@
+id: 2026-10-27-1055-fix-setup-php-2-40-0-bump
+title: Fix CI failure on setup-php 2.40.0 Dependabot bump
+status: closed
+created: 2026-10-27
+ticket: { provider: github, key: "#6", url: https://github.com/Refactor-Circus/Keystone/issues/6 }
+standards: {}
