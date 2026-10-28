@@ -27,7 +27,7 @@
         "laravel/pao": "^1.1.5",
         "laravel/pint": "^1.32.1",
         "orchestra/testbench": "^11.3",
-        "pestphp/pest": "^5.3.1",
+        "pestphp/pest": "^5.3.4",
         "pestphp/pest-plugin-laravel": "^5.0.1",
         "pestphp/pest-plugin-type-coverage": "^5.0.3",
         "phpstan/extension-installer": "^1.4.3",
@@ -118,9 +118,6 @@
     "suggest": {
         "laravel/mcp": "Required for the MCP request, tool and server base classes (^1.0).",
         "laravel/ai": "Marks changes Cortex agents make through package tools with the cortex surface (^1.0)."
-    },
-    "conflict": {
-        "brianium/paratest": ">=7.26.1"
     },
     "repositories": [
         {

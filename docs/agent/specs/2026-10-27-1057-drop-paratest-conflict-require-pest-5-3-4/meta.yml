@@ -1,0 +1,7 @@
+id: 2026-10-27-1057-drop-paratest-conflict-require-pest-5-3-4
+title: Drop brianium/paratest conflict, require pest ^5.3.4
+status: done
+created: 2026-10-27
+ticket: { provider: github, key: "#7", url: https://github.com/Refactor-Circus/Keystone/issues/7 }
+standards: {}
+review_passes: 1
