@@ -164,6 +164,27 @@ final class Tables extends \RefactorCircus\Keystone\Database\Tables
 
 Models return `Tables::name('dashboards')` from `getTable()`, and migrations, `Rule::unique`/`exists` and joins use it too, never a literal name. A published config that lists only some tables keeps the defaults for the rest. `Testing\Arch::literalTableNames()` finds literal names left in migrations or code, and `Arch::modelsWithoutPolicies()` finds models missing from `{key}.policies`.
 
+### Database connection
+
+A package can keep its tables on their own connection. `Tables::connection()` reads `{key}.database.connection` (null means the app's default); models, migrations, queries and rules all go through it:
+
+```php
+public function getConnectionName(): ?string // on each model
+{
+    return $this->connection ?? Tables::connection();
+}
+
+public function getConnection(): ?string // on each migration
+{
+    return Tables::connection();
+}
+
+Tables::db()->transaction(fn () => ...);           // not DB::transaction()
+Rule::exists(Tables::qualified('dashboards'), 'id'); // "{connection}.{table}"
+```
+
+`Arch::defaultConnectionUses()` finds code still reaching the default connection through `DB::` or an injected connection. Joins and `whereHas` against host models (users, teams) only work while both sit on the same database.
+
 ## Audit seams
 
 Keystone defines how packages talk to an audit log without depending on one. [refactor-circus/keen](https://github.com/Refactor-Circus/Keen) is the audit log; until it is installed, `AuditTrail` is bound to `NullAuditTrail`.

@@ -99,3 +99,16 @@ it('lists the files that name a table as a literal', function (): void {
 
     expect(Arch::literalTableNames($dir.'/migrations/*.php', ['acme_widgets', 'acme_parts']))->toBe(['create.php' => ['acme_widgets']]);
 });
+
+it('lists the files that reach the default connection instead of the package one', function (): void {
+    $dir = scratch([
+        'src/Facade.php' => "<?php\n\nDB::transaction(fn () => DB::table('x')->get());\nDB::table('y');\n",
+        'src/Injected.php' => "<?php\n\nfinal class A { public function __construct(private ConnectionInterface \$db) {} }\n",
+        'src/Package.php' => "<?php\n\nTables::db()->transaction(fn () => null);\n",
+    ]);
+
+    expect(Arch::defaultConnectionUses($dir.'/src/*.php'))->toBe([
+        'Facade' => ['DB::transaction', 'DB::table'],
+        'Injected' => ['ConnectionInterface $db'],
+    ]);
+});

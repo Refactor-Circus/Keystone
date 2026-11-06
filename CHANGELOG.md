@@ -2,6 +2,11 @@
 
 ## [Unreleased](https://github.com/Refactor-Circus/Keystone/compare/v0.1.0...main)
 
+### Added
+
+- `Database\Tables` gives a package its own database connection: `Tables::connection()` reads `{key}.database.connection` (null, the default, means the app's default connection; override the key with `CONNECTION`), `Tables::db()` is that connection for raw queries and transactions, and `Tables::qualified('dashboards')` is the `{connection}.{table}` name `exists`/`unique` rules expect. Models return `Tables::connection()` from `getConnectionName()` and migrations from `getConnection()`.
+- `Testing\Arch::defaultConnectionUses()`: files that reach the app's default connection through the `DB` facade or an injected `ConnectionInterface`/`DatabaseManager`/`ConnectionResolverInterface` instead of `Tables::db()`.
+
 ## [v0.1.0](https://github.com/Refactor-Circus/Keystone/commits/v0.1.0) - 2026-10-30
 
 ### Breaking

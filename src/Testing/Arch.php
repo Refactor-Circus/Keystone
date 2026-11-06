@@ -183,6 +183,29 @@ final class Arch
     }
 
     /**
+     * Files that reach the database through the `DB` facade or an injected
+     * default connection (`ConnectionInterface`, `DatabaseManager`) instead
+     * of the package's `Tables::db()`, by their source, with the calls each
+     * makes. Those go to the app's default connection and miss a package's
+     * own `{key}.database.connection`.
+     *
+     * @param  string|array<int, string>  $globs
+     * @return array<string, array<int, string>>
+     */
+    public static function defaultConnectionUses(string|array $globs): array
+    {
+        $gaps = [];
+
+        foreach (array_merge(...array_map(fn (string $glob): array => glob($glob) ?: [], (array) $globs)) as $path) {
+            if (preg_match_all('/\bDB::\w+|\b(?:ConnectionInterface|DatabaseManager|ConnectionResolverInterface)\s+\$\w+/', (string) file_get_contents($path), $matches) > 0) {
+                $gaps[basename($path, '.php')] = array_values(array_unique($matches[0]));
+            }
+        }
+
+        return $gaps;
+    }
+
+    /**
      * Models without a policy in the package's `{key}.policies` config, or
      * whose configured policy class does not exist.
      *
