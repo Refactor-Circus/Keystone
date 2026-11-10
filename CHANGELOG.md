@@ -1,6 +1,8 @@
 # Changelog
 
-## [Unreleased](https://github.com/Refactor-Circus/Keystone/compare/v0.1.0...main)
+## [Unreleased](https://github.com/Refactor-Circus/Keystone/compare/v0.1.1...main)
+
+## [v0.1.1](https://github.com/Refactor-Circus/Keystone/compare/v0.1.0...v0.1.1) - 2026-11-10
 
 ### Added
 
