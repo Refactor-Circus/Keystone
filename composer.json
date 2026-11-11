@@ -103,6 +103,9 @@
             "providers": [
                 "RefactorCircus\\Keystone\\KeystoneServiceProvider"
             ]
+        },
+        "branch-alias": {
+            "dev-main": "0.1.x-dev"
         }
     },
     "config": {
