@@ -36,6 +36,7 @@ Docs, changelog and branch alias (criteria 7, 8, 9, 10).
 ### Tests
 
 - `tests/Feature/DocumentationTest.php` passes (4 tests) and `pint --test` passes on it. PHPStan only analyses `src` and `tests/Fixtures`, so this group changes nothing it checks. The quality gate runs the full `vendor/bin/pest`, `composer lint:check` and `composer analyse` after the build.
+- On the retry the group was already complete, so no code changed. `composer lint:check`, `composer analyse` and `composer validate` passed again.
 
 ### Deviations
 
