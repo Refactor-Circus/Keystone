@@ -68,3 +68,25 @@ Authorization contracts, Gate fallback and bindings (criteria 11, 12, 13, 14, 15
 ### Deviations
 
 - `errors/exceptions`: `Abilities::define()` throws a bare `InvalidArgumentException`, as criterion 20 requires, rather than a package exception subclass. It is a programmer error raised during boot, like the `LogicException`s Keystone already throws. The row is in `docs/agent/standards-feedback.md`.
+
+## Group 4
+
+Authorizer and Policy helpers, testing fakes (criteria 21, 22, 23).
+
+### Files
+
+- `src/Auth/Authorizer.php`: `allows(?Authenticatable $user, string $ability, mixed $scope = null): bool` is true while the package's `authorization` is off and otherwise asks the bound `Permissions`, guests included. It resolves the binding on each call, so a fake installed after the authorizer was built still answers. The constructor and `can()` are unchanged.
+- `src/Policies/Policy.php`: `protected allowsAbility(?Authenticatable $user, string $ability, mixed $scope = null): bool` asks the bound `Permissions`. `allowsOn()` is unchanged.
+- `src/Testing/FakePermissions.php` (new, final): `install()` binds it with `instance()`. `grant($user, $ability, $scope = null)` and `superAdmin($user)` are chainable. `allows()` checks global grants (and super-admin), then each link of `ScopeChain::of()` (its grants, then `grantsByItself()`), behind a re-entry guard. `scopesWith()` is null for a global holder, otherwise the sorted keys of the matching-type scopes granted in (class or morph alias). `abilities()` lists the global and scope-chain grants, sorted. `forget()` does nothing. `holders()` lists global grantees and super-admins for `FakeRoles`. Roles of a bound `FakeRoles` count as grants.
+- `src/Testing/FakeRoles.php` (new, final): `install()` binds it. `define($role, $abilities, ?$scopeType)` sets a global or per-type role. `exists()`, `assign()`, `revoke()`, `revokeEverywhere()` and `of()` (sorted) work on exactly one scope, and a saved model loaded again is the same scope. `holders()` lists users whose global roles grant the ability or `super-admin`, plus the bound `FakePermissions`' holders. `abilitiesIn()` and `scopesGranting()` feed `FakePermissions`.
+- `tests/Unit/AuthorizerTest.php` (new): `allows()` with authorization off and on (global, scoped, guest), the binding looked up at call time, a guest passed through to the Gate fallback. `can()` off, on with a model subject, refusing guests and non-Eloquent users, and never asking `Permissions`. A fixture `Policy` subclass's `allowsAbility()` asks the installed fake and the Gate fallback for a guest.
+- `tests/Feature/AuthorizationFakesTest.php` (new): `FakePermissions` binding, per-scope grants (including a reloaded scope), the Gate being ignored, super-admin, `grantsByItself()` on a parent, a parent grant applying to a child, `scopesWith()`, `abilities()`, the re-entry guard and `forget()`. `FakeRoles` binding and `available()`, `define()`/`exists()` per scope type, `assign()`/`of()`/`revoke()`/`revokeEverywhere()`, `holders()` with super-admins and `FakePermissions` grantees, role abilities showing up in `FakePermissions` (allows, child scope, `scopesWith`, `abilities`, super-admin role, revoke), and either install order.
+- `docs/agent/specs/.../decisions.md`: D-014 records the choices above (call-time resolution, fake semantics, how the fakes find each other).
+
+### Tests
+
+- `composer test:unit`: 155 passed (415 assertions). `composer lint:check`, `composer analyse` and `composer test:types` (100%) pass.
+
+### Deviations
+
+- None. `FakePermissions::holders()`, `FakeRoles::abilitiesIn()` and `FakeRoles::scopesGranting()` are public helpers beyond criterion 23's list. They are the glue between the two fakes (D-014).

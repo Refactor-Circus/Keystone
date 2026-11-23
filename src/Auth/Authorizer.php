@@ -8,6 +8,7 @@ use Illuminate\Contracts\Auth\Access\Gate;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Database\Eloquent\Model;
+use RefactorCircus\Keystone\Authorization\Contracts\Permissions;
 use RefactorCircus\Keystone\Packages\Package;
 
 /**
@@ -66,5 +67,23 @@ final class Authorizer
         }
 
         return $user instanceof Model && $this->gate->forUser($user)->allows($ability, [$subject, ...$arguments]);
+    }
+
+    /**
+     * Whether the user may use a named ability (`acme.widgets.view`), globally
+     * or in a scope, as the bound `Permissions` answers it. A guest is asked
+     * about too.
+     *
+     * Unlike `can()`, which asks the Gate about a model so its policy decides,
+     * this asks the role store; neither calls the other. The binding is looked
+     * up on every call, so one replaced later (a test fake) still answers.
+     */
+    public function allows(?Authenticatable $user, string $ability, mixed $scope = null): bool
+    {
+        if (! $this->enabled()) {
+            return true;
+        }
+
+        return app(Permissions::class)->allows($user, $ability, $scope);
     }
 }

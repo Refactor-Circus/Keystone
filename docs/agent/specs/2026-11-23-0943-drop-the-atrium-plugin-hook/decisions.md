@@ -79,3 +79,9 @@ Spec review was skipped on the user's instruction (proceed without stopping); `m
 - Rationale: User instruction: build and gate, no review rounds.
 - Date: 2026-11-23
 - Raised by: user
+
+## D-014: How do the helpers reach the contract, and how do the testing fakes behave?
+- Choice: `Authorizer::allows()` and `Policy::allowsAbility()` resolve `Permissions` from the container on each call; `Authorizer`'s constructor is unchanged. In the fakes, a global grant or global role applies in every scope, a grant or role in a scope applies in its child scopes, and a guest may do nothing. `FakePermissions` never asks the Gate. The two fakes find each other through the container: `FakePermissions` adds the abilities of the bound `FakeRoles` (public helpers `abilitiesIn()` and `scopesGranting()`), and `FakeRoles::holders()` adds the bound `FakePermissions`' global grantees and super-admins (`FakePermissions::holders()`), so they work in either install order. `FakeRoles::define()` with a null scope type makes a global role; defining one again replaces its abilities. `assign()` is true once the user holds the role, already holding it included.
+- Rationale: Conservative and additive: no public constructor changes, and a binding replaced after an `Authorizer` was built (a fake installed in a test) still answers. The fake semantics match what the contract's docblocks say a role store does.
+- Date: 2026-11-23
+- Raised by: group 4 builder; conservative default per the tasks.md addendum

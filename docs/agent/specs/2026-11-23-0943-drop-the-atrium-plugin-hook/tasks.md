@@ -43,10 +43,10 @@ depends on: 3
 files: src/Auth/Authorizer.php, src/Policies/Policy.php, src/Testing/FakePermissions.php, src/Testing/FakeRoles.php, tests/Unit/AuthorizerTest.php, tests/Feature/AuthorizationFakesTest.php
 criteria: 21, 22, 23
 
-- [ ] 4.1 Write tests: `Authorizer::allows()` true with authorization off and the contract's answer with it on (using a bound fake); `can()` unchanged; a fixture policy's `allowsAbility()` asks the bound contract, for a guest too; `FakePermissions::install()` binds, `grant()` per scope, `superAdmin()`, honours `grantsByItself()` and parents; `FakeRoles::install()`, `define()`, `assign()`/`of()`/`revoke()`/`revokeEverywhere()`/`holders()`/`exists()` and the abilities a role grants show up in an installed `FakePermissions`
-- [ ] 4.2 Add `Authorizer::allows()` and `Policy::allowsAbility()`
-- [ ] 4.3 Implement `FakePermissions` and `FakeRoles` (final, in-memory, using `ScopeChain`)
-- [ ] 4.4 Run vendor/bin/pest, composer lint:check and composer analyse; all green
+- [x] 4.1 Write tests: `Authorizer::allows()` true with authorization off and the contract's answer with it on (using a bound fake); `can()` unchanged; a fixture policy's `allowsAbility()` asks the bound contract, for a guest too; `FakePermissions::install()` binds, `grant()` per scope, `superAdmin()`, honours `grantsByItself()` and parents; `FakeRoles::install()`, `define()`, `assign()`/`of()`/`revoke()`/`revokeEverywhere()`/`holders()`/`exists()` and the abilities a role grants show up in an installed `FakePermissions`
+- [x] 4.2 Add `Authorizer::allows()` and `Policy::allowsAbility()`
+- [x] 4.3 Implement `FakePermissions` and `FakeRoles` (final, in-memory, using `ScopeChain`)
+- [x] 4.4 Run vendor/bin/pest, composer lint:check and composer analyse; all green
 
 ## Group 5: Authorization docs and changelog
 depends on: 4

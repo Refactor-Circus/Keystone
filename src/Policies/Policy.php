@@ -7,6 +7,7 @@ namespace RefactorCircus\Keystone\Policies;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
+use RefactorCircus\Keystone\Authorization\Contracts\Permissions;
 
 /**
  * Shared checks for the policies each package bundles.
@@ -28,5 +29,15 @@ abstract class Policy
     protected function allowsOn(?Authenticatable $user, string $ability, Model $parent, array $arguments = []): bool
     {
         return Gate::forUser($user)->allows($ability, [$parent, ...$arguments]);
+    }
+
+    /**
+     * Ask the bound `Permissions` whether the user may use a named ability
+     * (`acme.widgets.view`), globally or in a scope, so a policy method can
+     * defer to whichever role store is installed. A guest is asked about too.
+     */
+    protected function allowsAbility(?Authenticatable $user, string $ability, mixed $scope = null): bool
+    {
+        return app(Permissions::class)->allows($user, $ability, $scope);
     }
 }
