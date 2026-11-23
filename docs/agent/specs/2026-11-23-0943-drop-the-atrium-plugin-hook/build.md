@@ -90,3 +90,21 @@ Authorizer and Policy helpers, testing fakes (criteria 21, 22, 23).
 ### Deviations
 
 - None. `FakePermissions::holders()`, `FakeRoles::abilitiesIn()` and `FakeRoles::scopesGranting()` are public helpers beyond criterion 23's list. They are the glue between the two fakes (D-014).
+
+## Group 5
+
+Authorization docs and changelog (criteria 25, 26).
+
+### Files
+
+- `README.md`: new "Authorization" section (before "Testing") covering the three contracts and what a `$scope` may be; the defaults (`GatePermissions` asking the Gate after the scope chain, the re-entry guard, the fallback answers; `NullRoles`); overriding with `singleton()`/`scoped()` in `register()` against Keystone's `singletonIf()`; decorating with `extend()`; `Abilities::define()`; how `Authorizer::can()`, `Authorizer::allows()` and `Policy::allowsAbility()` compose; and the `FakePermissions`/`FakeRoles` fakes. The class table's `Auth\Authorizer` and `Policies\Policy` rows mention the new helpers, and a row lists the contracts.
+- `CHANGELOG.md`: `[Unreleased]` gains `### Added` for the contract, defaults and bindings, `Abilities`, `Authorizer::allows()`/`Policy::allowsAbility()` and the fakes. The `### Breaking` line now keeps only Foundry on `^0.1` (D-013).
+- `tests/Feature/DocumentationTest.php`: the breaking-changes test no longer expects Guardian; a new test checks every `^0.1` line in `[Unreleased]` names Foundry and not Guardian; new tests check the README "Authorization" section names the contracts, defaults, `Abilities::define`, `Authorizer::allows`/`can`, `allowsAbility`, `singleton(`, `scoped(`, `extend(` and both fakes, and that `[Unreleased]` `### Added` names the authorization contract.
+
+### Tests
+
+- `composer test:unit`: 1114 passed (3639 assertions). `composer lint:check` and `composer analyse` pass.
+
+### Deviations
+
+- None. The existing `->toContain('Guardian')` expectation from group 2 was dropped because D-013 moves Guardian to v2.

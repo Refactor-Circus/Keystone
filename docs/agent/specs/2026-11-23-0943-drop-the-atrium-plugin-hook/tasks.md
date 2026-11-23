@@ -53,6 +53,6 @@ depends on: 4
 files: README.md, CHANGELOG.md, tests/Feature/DocumentationTest.php
 criteria: 25, 26
 
-- [ ] 5.1 Write tests in `DocumentationTest`: README has an "Authorization" section naming `Contracts\Permissions`, `Contracts\Roles`, `Contracts\Scope`, `GatePermissions`, `NullRoles`, `Abilities::define`, `Authorizer::allows`, `allowsAbility`, `extend(` and `FakePermissions`; CHANGELOG `[Unreleased]` has `### Added` naming the authorization contract
-- [ ] 5.2 Write the README "Authorization" section and the CHANGELOG `### Added` entry; if the `### Breaking` text says Guardian stays on `^0.1`, change it to Foundry only (D-013)
-- [ ] 5.3 Run vendor/bin/pest, composer lint:check and composer analyse; all green
+- [x] 5.1 Write tests in `DocumentationTest`: README has an "Authorization" section naming `Contracts\Permissions`, `Contracts\Roles`, `Contracts\Scope`, `GatePermissions`, `NullRoles`, `Abilities::define`, `Authorizer::allows`, `allowsAbility`, `extend(` and `FakePermissions`; CHANGELOG `[Unreleased]` has `### Added` naming the authorization contract
+- [x] 5.2 Write the README "Authorization" section and the CHANGELOG `### Added` entry; if the `### Breaking` text says Guardian stays on `^0.1`, change it to Foundry only (D-013)
+- [x] 5.3 Run vendor/bin/pest, composer lint:check and composer analyse; all green
