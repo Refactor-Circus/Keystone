@@ -63,6 +63,7 @@ Authorization contracts, Gate fallback and bindings (criteria 11, 12, 13, 14, 15
 ### Tests
 
 - `composer test:unit`: 130 passed (36 in the new authorization tests). `composer lint:check`, `composer analyse` (level 7, includes `tests/Fixtures`) and `composer test:types` (100%) all pass.
+- The retry found the group already complete and committed, so no code changed. `composer test:unit` (130 passed, 320 assertions), `composer lint:check` and `composer analyse` passed again.
 
 ### Deviations
 
