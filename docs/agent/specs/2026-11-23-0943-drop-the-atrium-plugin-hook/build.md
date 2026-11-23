@@ -104,6 +104,7 @@ Authorization docs and changelog (criteria 25, 26).
 ### Tests
 
 - `composer test:unit`: 1114 passed (3639 assertions). `composer lint:check` and `composer analyse` pass.
+- Retry: `composer test:unit` failed on `records the authorization contract as added under unreleased`, because the CHANGELOG `### Added` entry wrote `Authorizer::allows($user, $ability, $scope)` rather than `Authorizer::allows()`. Reworded the CHANGELOG line to name `Authorizer::allows()` like the other entries. `composer test:unit` now passes (158 tests, 445 assertions), and so do `composer lint:check` and `composer analyse`.
 
 ### Deviations
 
