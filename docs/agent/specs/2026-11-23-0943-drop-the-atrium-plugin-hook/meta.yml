@@ -1,9 +1,15 @@
 id: 2026-11-23-0943-drop-the-atrium-plugin-hook
 title: 'Drop the Atrium plugin hook'
-status: building
+status: approved
 created: '2026-11-23 09:43'
 blocks: [Cortex, Impex, Keen, PennantPlus, Polycart, Roster, Showroom v2 specs 2026-11-23-0943-*]
 standards:
   refactor-circus/standards:
     version: dev-main
     reference: a5b675396232
+runs:
+  - workflow: ring-master-factory
+    run_id: wf_a9d5468f-60a
+    result: approved
+    round: 1
+    date: 2026-11-23
