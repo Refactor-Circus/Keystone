@@ -52,7 +52,7 @@ final class PackageRegistry
 
     /**
      * The package a class belongs to: the one with the longest matching
-     * namespace, so `RefactorCircus\Atrium` never claims a class of `RefactorCircus\AtriumPlus`.
+     * namespace, so `Acme\Shop` never claims a class of `Acme\ShopPlus`.
      *
      * @param  object|class-string  $class
      */

@@ -223,7 +223,7 @@ final class Arch
 
     /**
      * Files that name one of the package's tables as a string literal - a
-     * quoted name starting with the prefix, such as `'atrium_dashboards'` -
+     * quoted name starting with the prefix, such as `'acme_widgets'` -
      * rather than asking the package's `Tables`, with the names each holds.
      *
      * @param  string|array<int, string>  $globs

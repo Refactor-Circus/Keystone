@@ -21,16 +21,16 @@ use Illuminate\Database\ConnectionResolverInterface;
  *
  *     final class Tables extends \RefactorCircus\Keystone\Database\Tables
  *     {
- *         protected const string CONFIG = 'atrium.tables';
+ *         protected const string CONFIG = 'acme.tables';
  *
  *         public const array DEFAULTS = [
- *             'dashboards' => 'atrium_dashboards',
+ *             'widgets' => 'acme_widgets',
  *         ];
  *     }
  *
- *     Schema::create(Tables::name('dashboards'), ...);
+ *     Schema::create(Tables::name('widgets'), ...);
  *     Tables::db()->transaction(fn () => ...);
- *     Rule::exists(Tables::qualified('dashboards'), 'id');
+ *     Rule::exists(Tables::qualified('widgets'), 'id');
  */
 abstract class Tables
 {

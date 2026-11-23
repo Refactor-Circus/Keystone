@@ -10,13 +10,14 @@ use Illuminate\Http\Request;
 use RefactorCircus\Keystone\Packages\PackageRegistry;
 
 /**
- * Which surface the current call came through: `atrium`, `http`, `mcp`,
- * `cortex`, `cli`, `code`, or one a package names for its own routes (`scim`, `web`).
+ * Which surface the current call came through: `http`, `mcp`, `cortex`,
+ * `cli`, `code`, or one a package or host names for its routes with `route()`
+ * (`scim`, `web`, a dashboard's own).
  *
  * The MCP request base marks its calls with `using('mcp', ...)`, and Cortex
- * agent tool calls are marked `cortex`. Otherwise the
- * route decides: `atrium.*` routes are the dashboard and a package's `{key}.*`
- * routes its JSON API, unless a package registered a more specific prefix.
+ * agent tool calls are marked `cortex`. Otherwise the route decides: a
+ * package's `{key}.*` routes are its JSON API, unless a package or host named
+ * a more specific prefix. Any other call is `cli` in the console, else `code`.
  */
 final class Surface
 {
@@ -153,8 +154,6 @@ final class Surface
         foreach ($packages as $package) {
             $prefixes[$package->key.'.'] ??= 'http';
         }
-
-        $prefixes['atrium.'] = $this->routes['atrium.'] ?? 'atrium';
 
         // The most specific prefix wins: `roster.scim.` before `roster.`.
         uksort($prefixes, fn (string $a, string $b): int => strlen($b) <=> strlen($a));

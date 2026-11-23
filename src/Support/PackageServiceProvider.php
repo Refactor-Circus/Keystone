@@ -25,14 +25,13 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  *
  * The package describes itself once in `definition()` and registers that
  * definition first thing in `register()`, through `registerPackage()`. The
- * helpers below then read everything else - policies, MCP routes, the Atrium
+ * helpers below then read everything else - policies, MCP routes, the Cortex
  * switch - from the package's config file (`registerNotFoundResponses()` needs
- * none), which every package in the suite
- * shapes the same way:
+ * none), which every package in the suite shapes the same way:
  *
  *     authorization, policies, routes{enabled,prefix,middleware},
  *     mcp{web{enabled,route,middleware},local{enabled,handle}},
- *     cortex{enabled,server,tools}, ui{enabled}
+ *     cortex{enabled,server,tools}
  */
 abstract class PackageServiceProvider extends ServiceProvider
 {
@@ -102,23 +101,6 @@ abstract class PackageServiceProvider extends ServiceProvider
     protected function registerCortex(): void
     {
         CortexIntegration::for($this->package())->register();
-    }
-
-    /**
-     * Register the package's plugin with the Atrium dashboard, when Atrium is
-     * installed and the package's `ui.enabled` config key is true.
-     *
-     * @param  class-string  $plugin
-     */
-    protected function registerAtriumPlugin(string $plugin): void
-    {
-        $atrium = 'RefactorCircus\\Atrium\\Atrium';
-
-        if (! class_exists($atrium) || $this->config()->get($this->package()->configKey('ui.enabled')) !== true) {
-            return;
-        }
-
-        $this->app->make($atrium)->plugin($plugin);
     }
 
     /**
