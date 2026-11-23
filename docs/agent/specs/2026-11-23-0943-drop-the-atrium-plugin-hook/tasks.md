@@ -22,3 +22,37 @@ criteria: 7, 8, 9, 10
 - [x] 2.4 composer.json: set `extra.branch-alias.dev-main` to `0.2.x-dev`; run `composer validate`.
 - [x] 2.5 docs/agent/standards-feedback.md: add a row (2026-11-23, this spec, architecture/service-providers, the standard still lists `registerAtriumPlugin()` which Keystone removed, needs a Standards spec).
 - [x] 2.6 Run vendor/bin/pest, composer lint:check and composer analyse; all green.
+
+## Addendum 2026-11-23: authorization contract
+
+Builders: if a design question comes up, choose the most conservative option consistent with spec.md and decisions.md, record it as the next D-entry in decisions.md, and continue. You may change files outside a group's list when the group needs it; commit them with the group.
+
+## Group 3: Authorization contracts, Gate fallback and bindings
+depends on: 2
+files: src/Authorization/Contracts/Permissions.php, src/Authorization/Contracts/Roles.php, src/Authorization/Contracts/Scope.php, src/Authorization/GatePermissions.php, src/Authorization/NullRoles.php, src/Authorization/Abilities.php, src/Authorization/ScopeChain.php, src/KeystoneServiceProvider.php, tests/Feature/AuthorizationContractTest.php, tests/Unit/AbilitiesTest.php, tests/Fixtures/Acme/Authorization/*, tests/ArchTest.php
+criteria: 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 24
+
+- [ ] 3.1 Write tests: `AuthorizationContractTest` (default bindings; a fixture provider binding its own Permissions/Roles before and after Keystone wins; an `extend()` decorator survives the rebind; `Gate::define()` honoured, undefined refused, guest refused; a fixture team Scope whose parent organization `grantsByItself` allows; `ScopeChain::of()` order and loop stop; a `Gate::before` calling `allows()` re-entrantly does not recurse; `scopesWith`/`abilities`/`isSuperAdmin`/`forget` fallback answers; NullRoles answers with a query counter at zero), `AbilitiesTest` (define/has/all sorted; duplicate, empty and whitespace names throw), and the arch rules (contracts are interfaces, classes final, no Roster/Guardian use or string in `src/Authorization`)
+- [ ] 3.2 Add the three interfaces with full docblocks
+- [ ] 3.3 Implement `ScopeChain`, `GatePermissions` (scope walk, re-entry guard in `finally`), `NullRoles` and `Abilities`
+- [ ] 3.4 Bind `Abilities`, `Permissions` and `Roles` with `singletonIf` in `KeystoneServiceProvider::register()`
+- [ ] 3.5 Run vendor/bin/pest, composer lint:check and composer analyse; all green
+
+## Group 4: Authorizer and Policy helpers, testing fakes
+depends on: 3
+files: src/Auth/Authorizer.php, src/Policies/Policy.php, src/Testing/FakePermissions.php, src/Testing/FakeRoles.php, tests/Unit/AuthorizerTest.php, tests/Feature/AuthorizationFakesTest.php
+criteria: 21, 22, 23
+
+- [ ] 4.1 Write tests: `Authorizer::allows()` true with authorization off and the contract's answer with it on (using a bound fake); `can()` unchanged; a fixture policy's `allowsAbility()` asks the bound contract, for a guest too; `FakePermissions::install()` binds, `grant()` per scope, `superAdmin()`, honours `grantsByItself()` and parents; `FakeRoles::install()`, `define()`, `assign()`/`of()`/`revoke()`/`revokeEverywhere()`/`holders()`/`exists()` and the abilities a role grants show up in an installed `FakePermissions`
+- [ ] 4.2 Add `Authorizer::allows()` and `Policy::allowsAbility()`
+- [ ] 4.3 Implement `FakePermissions` and `FakeRoles` (final, in-memory, using `ScopeChain`)
+- [ ] 4.4 Run vendor/bin/pest, composer lint:check and composer analyse; all green
+
+## Group 5: Authorization docs and changelog
+depends on: 4
+files: README.md, CHANGELOG.md, tests/Feature/DocumentationTest.php
+criteria: 25, 26
+
+- [ ] 5.1 Write tests in `DocumentationTest`: README has an "Authorization" section naming `Contracts\Permissions`, `Contracts\Roles`, `Contracts\Scope`, `GatePermissions`, `NullRoles`, `Abilities::define`, `Authorizer::allows`, `allowsAbility`, `extend(` and `FakePermissions`; CHANGELOG `[Unreleased]` has `### Added` naming the authorization contract
+- [ ] 5.2 Write the README "Authorization" section and the CHANGELOG `### Added` entry; if the `### Breaking` text says Guardian stays on `^0.1`, change it to Foundry only (D-013)
+- [ ] 5.3 Run vendor/bin/pest, composer lint:check and composer analyse; all green
