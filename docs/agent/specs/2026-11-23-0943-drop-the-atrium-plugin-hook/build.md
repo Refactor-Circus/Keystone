@@ -15,7 +15,7 @@ Remove Atrium from the runtime (criteria 1, 2, 3, 4, 5, 6, 10).
 
 ### Tests
 
-- `composer lint:check` passed. The quality gate runs `vendor/bin/pest` and `composer analyse` after the build. `tests/Feature/HistoryTest.php` is unmodified.
+- `composer lint:check` and `composer analyse` passed (re-run on the retry, which found the group complete and changed no code). The quality gate runs `vendor/bin/pest` after the build. `tests/Feature/HistoryTest.php` is unmodified.
 
 ### Deviations
 
