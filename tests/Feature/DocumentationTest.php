@@ -43,12 +43,12 @@ it('shows only the remaining helpers and config keys in the readme examples', fu
         ->toContain("'cortex' =>");
 });
 
-it('records the breaking changes of v0.2.0 under unreleased', function (): void {
+it('records the breaking changes of v2.0.0 under unreleased', function (): void {
     $unreleased = unreleasedChangelog();
 
     expect($unreleased)
         ->toContain('### Breaking')
-        ->toContain('v0.2.0')
+        ->toContain('v2.0.0')
         ->toContain('registerAtriumPlugin()')
         ->toContain('ui.enabled')
         ->toContain("Surface::route('atrium.', 'atrium')")
@@ -56,9 +56,9 @@ it('records the breaking changes of v0.2.0 under unreleased', function (): void 
         ->toContain('Guardian');
 });
 
-it('aliases the main branch to 0.2.x-dev', function (): void {
+it('aliases the main branch to 2.0.x-dev', function (): void {
     /** @var array{extra: array{branch-alias: array{dev-main: string}}} $composer */
     $composer = json_decode(packageFile('composer.json'), true, flags: JSON_THROW_ON_ERROR);
 
-    expect($composer['extra']['branch-alias']['dev-main'])->toBe('0.2.x-dev');
+    expect($composer['extra']['branch-alias']['dev-main'])->toBe('2.0.x-dev');
 });

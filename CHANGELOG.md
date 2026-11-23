@@ -4,12 +4,12 @@
 
 ### Breaking
 
-Released as v0.2.0: Keystone no longer names Atrium. Atrium hosts the suite's front ends and registers each package's UI itself.
+Released as v2.0.0, matching the rest of the suite: Keystone no longer names Atrium. Atrium hosts the suite's front ends and registers each package's UI itself.
 
 - `PackageServiceProvider::registerAtriumPlugin()` is removed. Atrium registers package UIs itself; drop the call from your provider's `boot()`.
 - The `{key}.ui.enabled` convention ends: Keystone no longer reads `ui.enabled`, so drop the `ui` key from your package config.
 - `Surface` has no built-in `atrium.` route prefix. Calls through `atrium.*` routes are no longer recorded as `atrium` but resolve like any other route name (`http` if a package registered the `atrium` key, else `code`, or `cli` in the console) unless the host names the surface itself with `Surface::route('atrium.', 'atrium')`.
-- Foundry and Guardian, and any package that still calls `registerAtriumPlugin()`, stay on Keystone `^0.1` (v0.1.1) until they migrate. `dev-main` is now aliased to `0.2.x-dev`, so `^0.1` constraints never resolve `main`.
+- Foundry and Guardian, and any package that still calls `registerAtriumPlugin()`, stay on Keystone `^0.1` (v0.1.1) until they migrate. `dev-main` is now aliased to `2.0.x-dev`, so `^0.1` constraints never resolve `main`.
 
 ## [v0.1.1](https://github.com/Refactor-Circus/Keystone/compare/v0.1.0...v0.1.1) - 2026-11-10
 

@@ -31,3 +31,9 @@ Spec review was skipped on the user's instruction (proceed without stopping); `m
 - Rationale: conservative; releases are made by the package-release workflow, not by a factory job.
 - Date: 2026-11-23
 - Raised by: write-spec; default chosen because the user asked to proceed without stopping
+
+## D-006: Which version does the suite release under?
+- Choice: Every suite package releases as v2.0.0 to match: Keystone, Atrium, Cortex, Impex, Keen, PennantPlus, Polycart, Roster and Showroom. Every `refactor-circus/*` constraint (require and require-dev) is `^2.0`, and every repo aliases `dev-main` to `2.0.x-dev`. Foundry and Guardian stay on Keystone `^0.1` until they migrate.
+- Rationale: The user said "i'd like everything release as v2 to match". This supersedes any earlier choice to keep `^0.1` constraints or release Keystone as v0.2.0.
+- Date: 2026-11-23
+- Raised by: user
