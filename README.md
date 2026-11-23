@@ -4,9 +4,9 @@
 
 # Keystone
 
-The shared, headless runtime for the Refactor Circus package suite (Atrium, Cortex, Impex, Keen, PennantPlus, Polycart, Roster, Showroom).
+The shared, headless runtime for the Refactor Circus package suite.
 
-Keystone has no routes, views or config of its own. It holds the base classes and contracts every package used to copy, so each package works the same way and works without the Atrium dashboard.
+Keystone has no routes, views or config of its own. It holds the base classes and contracts every package used to copy, so each package works the same way and works without any dashboard.
 
 ## Installation
 
@@ -45,7 +45,6 @@ final class ShowroomServiceProvider extends PackageServiceProvider
         $this->registerPolicies();      // showroom.policies
         $this->registerMcpServer();     // showroom.mcp.web / showroom.mcp.local
         $this->registerCortex();        // showroom.cortex.*, when Cortex is installed
-        $this->registerAtriumPlugin(ShowroomPlugin::class); // showroom.ui.enabled, when Atrium is installed
         $this->loadHistoryRoutes();     // GET {prefix}/history
     }
 }
@@ -63,7 +62,6 @@ return [
         'local' => ['enabled' => false, 'handle' => 'showroom'],
     ],
     'cortex' => ['enabled' => true, 'server' => 'showroom', 'tools' => null, 'tags' => null],
-    'ui' => ['enabled' => true],
 ];
 ```
 
@@ -88,7 +86,7 @@ return [
 | `Cortex\CortexIntegration` | Registers a package's server and tools with Cortex when it is installed |
 | `Exceptions\PackageException` | Base for a package's rule-broken exceptions (409 JSON, MCP error text) |
 | `Policies\Policy` | `allowsOn()` defers a child model to its parent's policy, for any signed-in user or a guest |
-| `Support\Surface` | Which surface a call came through: `atrium`, `http`, `mcp`, `cortex`, `cli`, `code` |
+| `Support\Surface` | Which surface a call came through: `http`, `mcp`, `cortex`, `cli`, `code`, or one a package or host names for its routes with `route()` |
 
 ## Action input
 
@@ -154,15 +152,15 @@ Every table a package creates is named in its `{key}.tables` config, so an appli
 ```php
 final class Tables extends \RefactorCircus\Keystone\Database\Tables
 {
-    protected const string CONFIG = 'atrium.tables';
+    protected const string CONFIG = 'acme.tables';
 
     public const array DEFAULTS = [
-        'dashboards' => 'atrium_dashboards',
+        'widgets' => 'acme_widgets',
     ];
 }
 ```
 
-Models return `Tables::name('dashboards')` from `getTable()`, and migrations, `Rule::unique`/`exists` and joins use it too, never a literal name. A published config that lists only some tables keeps the defaults for the rest. `Testing\Arch::literalTableNames()` finds literal names left in migrations or code, and `Arch::modelsWithoutPolicies()` finds models missing from `{key}.policies`.
+Models return `Tables::name('widgets')` from `getTable()`, and migrations, `Rule::unique`/`exists` and joins use it too, never a literal name. A published config that lists only some tables keeps the defaults for the rest. `Testing\Arch::literalTableNames()` finds literal names left in migrations or code, and `Arch::modelsWithoutPolicies()` finds models missing from `{key}.policies`.
 
 ### Database connection
 
@@ -180,7 +178,7 @@ public function getConnection(): ?string // on each migration
 }
 
 Tables::db()->transaction(fn () => ...);           // not DB::transaction()
-Rule::exists(Tables::qualified('dashboards'), 'id'); // "{connection}.{table}"
+Rule::exists(Tables::qualified('widgets'), 'id'); // "{connection}.{table}"
 ```
 
 `Arch::defaultConnectionUses()` finds code still reaching the default connection through `DB::` or an injected connection. Joins and `whereHas` against host models (users, teams) only work while both sit on the same database.
