@@ -1,6 +1,6 @@
 id: 2026-11-23-0943-drop-the-atrium-plugin-hook
 title: 'Drop the Atrium plugin hook'
-status: approved
+status: in-review
 created: '2026-11-23 09:43'
 blocks: [Cortex, Impex, Keen, PennantPlus, Polycart, Roster, Showroom v2 specs 2026-11-23-0943-*, Guardian/2026-11-23-1718-guardian-v2-security-platform]
 standards:
@@ -18,3 +18,4 @@ runs:
     result: approved
     round: 1
     date: 2026-11-23
+pr: https://github.com/Refactor-Circus/Keystone/pull/16
