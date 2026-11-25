@@ -241,6 +241,8 @@ final class FakePermissions implements Permissions
 
     private function roles(): ?FakeRoles
     {
+        // Typed as the contract: Larastan may narrow app() to the bound class, which is never the fake.
+        /** @var Roles $roles */
         $roles = app(Roles::class);
 
         return $roles instanceof FakeRoles ? $roles : null;

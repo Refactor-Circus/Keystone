@@ -149,6 +149,8 @@ final class FakeRoles implements Roles
             }
         }
 
+        // Typed as the contract: Larastan may narrow app() to the bound class, which is never the fake.
+        /** @var Permissions $permissions */
         $permissions = app(Permissions::class);
 
         if ($permissions instanceof FakePermissions) {
