@@ -10,7 +10,7 @@ use RefactorCircus\Keystone\Audit\Data\AuditPage;
 /**
  * Read access to the audit log, whichever package keeps it.
  *
- * Every package and the Atrium dashboard read history through this contract,
+ * Every package and any dashboard read history through this contract,
  * so none of them depends on refactor-circus/keen. Until it is installed the shared
  * runtime binds `NullAuditTrail`, which is never available and always empty.
  */

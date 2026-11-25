@@ -4,9 +4,9 @@
 
 # Keystone
 
-The shared, headless runtime for the Refactor Circus package suite (Atrium, Cortex, Impex, Keen, PennantPlus, Polycart, Roster, Showroom).
+The shared, headless runtime for the Refactor Circus package suite.
 
-Keystone has no routes, views or config of its own. It holds the base classes and contracts every package used to copy, so each package works the same way and works without the Atrium dashboard.
+Keystone has no routes, views or config of its own. It holds the base classes and contracts every package used to copy, so each package works the same way and works without any dashboard.
 
 ## Installation
 
@@ -45,7 +45,6 @@ final class ShowroomServiceProvider extends PackageServiceProvider
         $this->registerPolicies();      // showroom.policies
         $this->registerMcpServer();     // showroom.mcp.web / showroom.mcp.local
         $this->registerCortex();        // showroom.cortex.*, when Cortex is installed
-        $this->registerAtriumPlugin(ShowroomPlugin::class); // showroom.ui.enabled, when Atrium is installed
         $this->loadHistoryRoutes();     // GET {prefix}/history
     }
 }
@@ -63,7 +62,6 @@ return [
         'local' => ['enabled' => false, 'handle' => 'showroom'],
     ],
     'cortex' => ['enabled' => true, 'server' => 'showroom', 'tools' => null, 'tags' => null],
-    'ui' => ['enabled' => true],
 ];
 ```
 
@@ -78,7 +76,8 @@ return [
 | `Models\Concerns\DispatchesModelEvents` | Maps each Eloquent hook to `Domains\{Domain}\Events\{Entity}{Hook}Event` |
 | `Support\ServiceProvider` | Domain provider base: `loadApiRoutesFrom()`, `keepMorphAliases()` |
 | `Support\PackageServiceProvider` | Main provider base, as above |
-| `Auth\Authorizer` | The `authorization` switch and Gate checks |
+| `Auth\Authorizer` | The `authorization` switch, Gate checks on models (`can()`) and named abilities in a scope (`allows()`) |
+| `Authorization\Contracts\Permissions`, `Roles`, `Scope` | The authorization contract a role store implements, with a Gate fallback (see below) |
 | `Http\Requests\Request` | FormRequest with `persist()`, `actor()`, `allows()`, `allowsEach()`; guests get 401, others 403 |
 | `Http\Resources\JsonResource`, `Http\Resources\ResourceCollection` | API resources that answer MCP with the HTTP payload: `->toStructuredResponse()` gives `{data, meta?, ...additional}`. Each resource describes its fields in `schema()`, and a tool declares its output with `XResource::structuredSchema()` / `collectionSchema()` |
 | `Pagination\Pagination` | How a list pages - `pages()` (with a total), `simple()` (without) or `cursor()` - as one definition: its validation `rules()`, the tool input `schema()`, and the `meta()` its answer carries. `JsonResource::collectionSchema($schema, $pagination)` takes it |
@@ -87,8 +86,8 @@ return [
 | `Mcp\Requests\Request`, `Mcp\Tool`, `Mcp\Server` | The same pattern for MCP, with Cortex overrides |
 | `Cortex\CortexIntegration` | Registers a package's server and tools with Cortex when it is installed |
 | `Exceptions\PackageException` | Base for a package's rule-broken exceptions (409 JSON, MCP error text) |
-| `Policies\Policy` | `allowsOn()` defers a child model to its parent's policy, for any signed-in user or a guest |
-| `Support\Surface` | Which surface a call came through: `atrium`, `http`, `mcp`, `cortex`, `cli`, `code` |
+| `Policies\Policy` | `allowsOn()` defers a child model to its parent's policy, for any signed-in user or a guest; `allowsAbility()` asks the authorization contract |
+| `Support\Surface` | Which surface a call came through: `http`, `mcp`, `cortex`, `cli`, `code`, or one a package or host names for its routes with `route()` |
 
 ## Action input
 
@@ -154,15 +153,15 @@ Every table a package creates is named in its `{key}.tables` config, so an appli
 ```php
 final class Tables extends \RefactorCircus\Keystone\Database\Tables
 {
-    protected const string CONFIG = 'atrium.tables';
+    protected const string CONFIG = 'acme.tables';
 
     public const array DEFAULTS = [
-        'dashboards' => 'atrium_dashboards',
+        'widgets' => 'acme_widgets',
     ];
 }
 ```
 
-Models return `Tables::name('dashboards')` from `getTable()`, and migrations, `Rule::unique`/`exists` and joins use it too, never a literal name. A published config that lists only some tables keeps the defaults for the rest. `Testing\Arch::literalTableNames()` finds literal names left in migrations or code, and `Arch::modelsWithoutPolicies()` finds models missing from `{key}.policies`.
+Models return `Tables::name('widgets')` from `getTable()`, and migrations, `Rule::unique`/`exists` and joins use it too, never a literal name. A published config that lists only some tables keeps the defaults for the rest. `Testing\Arch::literalTableNames()` finds literal names left in migrations or code, and `Arch::modelsWithoutPolicies()` finds models missing from `{key}.policies`.
 
 ### Database connection
 
@@ -180,7 +179,7 @@ public function getConnection(): ?string // on each migration
 }
 
 Tables::db()->transaction(fn () => ...);           // not DB::transaction()
-Rule::exists(Tables::qualified('dashboards'), 'id'); // "{connection}.{table}"
+Rule::exists(Tables::qualified('widgets'), 'id'); // "{connection}.{table}"
 ```
 
 `Arch::defaultConnectionUses()` finds code still reaching the default connection through `DB::` or an injected connection. Joins and `whereHas` against host models (users, teams) only work while both sit on the same database.
@@ -195,6 +194,86 @@ Keystone defines how packages talk to an audit log without depending on one. [re
 - `Package::authorizeHistory()` lets a package that does not authorize through policies decide who reads its history.
 - `Package::audits()`: whether a package audits - only while Keen is installed, and unless its `{key}.audit.enabled` config key is false. A package registers its `AuditHooks` and anything else audit-related only when it does.
 - `Audit\History` plus `loadHistoryRoutes()` and `Mcp\Tools\ListHistoryTool`: every package serves its own history over HTTP and MCP while it audits. Otherwise the route answers 404, and the tool is not offered on the package's MCP server or to Cortex.
+
+## Authorization
+
+Packages never ask each other who may do what. They ask a contract Keystone defines, and a role store (or nothing) answers it:
+
+- `Authorization\Contracts\Permissions`: `allows($user, $ability, $scope = null)`, `scopesWith($user, $ability, $scopeType)` (the scope keys a list is limited to; null means not limited), `abilities($user, $scope = null)` (null means the implementation cannot list them), `isSuperAdmin($user)` and `forget($user = null)`. `Permissions::SUPER_ADMIN` is `super-admin`.
+- `Authorization\Contracts\Roles`: `available()`, `exists()`, `assign()`, `revoke()` (roles held in exactly that scope), `revokeEverywhere()`, `of()` and `holders($ability)`.
+- `Authorization\Contracts\Scope`: implemented by the Eloquent models permissions are scoped to. `parentScope()` names the scope whose grants also apply (a team's organization) and `grantsByItself($user, $ability)` is the scope's own rule (an organization's owner). Every implementation honours both; `ScopeChain::of($scope)` walks a scope and its parents.
+
+A `$scope` is null (global), a `Scope`, or any Eloquent model, which then has no parents.
+
+### Defaults
+
+With no role store installed, Keystone binds `Permissions` to `GatePermissions` and `Roles` to `NullRoles`:
+
+- `GatePermissions` asks the host's Gate: an ability defined with `Gate::define()` (or a `Gate::before()` callback) decides, an undefined one is refused, and so is a guest unless the host's gate lets guests in. A `Scope` that grants the ability by itself, or any of its parents, allows it first. `isSuperAdmin()` asks the Gate for `super-admin`, `scopesWith()` is null when the ability is allowed with no scope and `[]` otherwise, and `abilities()` is null. A `Gate::before()` callback that asks `allows()` again for the same check gets false rather than a loop.
+- `NullRoles` stores nothing: `available()`, `exists()` and `assign()` are false, `of()` and `holders()` are empty.
+
+### A role store
+
+A role store replaces the defaults by binding the contracts in its provider's `register()`. Keystone binds with `singletonIf()`, so `singleton()` wins whichever provider registers first; use `scoped()` when the implementation memoizes per request:
+
+```php
+public function register(): void
+{
+    $this->app->scoped(Permissions::class, RolePermissions::class);
+    $this->app->singleton(Roles::class, RoleStore::class);
+}
+```
+
+A package that adds a rule to every check, without being the store, decorates the binding with `extend()`. Laravel keeps the decorator when a role store rebinds later:
+
+```php
+$this->app->extend(Permissions::class, fn (Permissions $permissions) => new BlockWhileImpersonating($permissions));
+```
+
+### Abilities
+
+Packages describe the abilities they check from their provider's `boot()`, so a role store can list them and seed its default roles:
+
+```php
+app(Abilities::class)
+    ->define('acme.widgets.view', 'View widgets', grantTo: ['admin', 'member'])
+    ->define('acme.widgets.edit', 'Edit widgets', grantTo: ['admin']);
+```
+
+`Abilities::define()` refuses a name defined twice, an empty one or one with whitespace. `has()` and `all()` (sorted by ability) read the registry.
+
+### Checking
+
+`Authorizer::can($user, $ability, $model)` asks the Gate about a model, so the package's policy decides; it is unchanged. `Authorizer::allows($user, $ability, $scope)` asks the bound `Permissions` about a named ability, and like `can()` is true while the package's `authorization` key is off. A policy method asks the contract through `Policy::allowsAbility($user, $ability, $scope)`, for guests too:
+
+```php
+final class WidgetPolicy extends Policy
+{
+    public function update(?Authenticatable $user, Widget $widget): bool
+    {
+        return $this->allowsAbility($user, 'acme.widgets.edit', $widget->organization);
+    }
+}
+```
+
+So `can()` reaches the policy and the policy reaches the contract; neither helper calls the other, and `allowsOn()` keeps deferring a child model to its parent's policy.
+
+### Testing
+
+`Testing\FakePermissions` and `Testing\FakeRoles` keep grants and roles in memory. `install()` binds each in place of the defaults, and they work together in either order:
+
+```php
+FakePermissions::install()
+    ->grant($user, 'acme.widgets.view')
+    ->grant($user, 'acme.widgets.edit', $organization)
+    ->superAdmin($admin);
+
+FakeRoles::install()
+    ->define('owner', ['acme.teams.manage'], Organization::class)
+    ->assign($user, 'owner', $organization);
+```
+
+A global grant or role applies in every scope, one in a scope applies in its child scopes, `grantsByItself()` is honoured, and a guest may do nothing. `FakePermissions` never asks the Gate.
 
 ## Testing
 

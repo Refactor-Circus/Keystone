@@ -16,6 +16,16 @@ function surfaceForRoute(string $name): string
 }
 
 it('names the surface from the route', function (): void {
+    expect(surfaceForRoute('acme.widgets.store'))->toBe('http');
+});
+
+it('has no built-in surface for a dashboard route', function (): void {
+    expect(surfaceForRoute('atrium.dashboard'))->toBe('cli');
+});
+
+it('lets a host name its own surface', function (): void {
+    app(Surface::class)->route('atrium.', 'atrium');
+
     expect(surfaceForRoute('atrium.dashboard'))->toBe('atrium')
         ->and(surfaceForRoute('acme.widgets.store'))->toBe('http');
 });

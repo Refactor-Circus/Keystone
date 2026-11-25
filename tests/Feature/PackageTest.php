@@ -62,6 +62,10 @@ it('serves the package mcp server over http and locally', function (): void {
         ->and($mcp->getLocalServer('acme'))->not->toBeNull();
 });
 
+it('leaves registering a dashboard plugin to the dashboard', function (): void {
+    expect(method_exists(PackageServiceProvider::class, 'registerAtriumPlugin'))->toBeFalse();
+});
+
 it('authorizes through the gate only when the package asks for it', function (): void {
     Gate::define('create', fn (): bool => false);
     Gate::policy(WidgetModel::class, DenyAllWidgetPolicy::class);

@@ -1,0 +1,21 @@
+id: 2026-11-23-0943-drop-the-atrium-plugin-hook
+title: 'Drop the Atrium plugin hook'
+status: in-review
+created: '2026-11-23 09:43'
+blocks: [Cortex, Impex, Keen, PennantPlus, Polycart, Roster, Showroom v2 specs 2026-11-23-0943-*, Guardian/2026-11-23-1718-guardian-v2-security-platform]
+standards:
+  refactor-circus/standards:
+    version: dev-main
+    reference: a5b675396232
+runs:
+  - workflow: ring-master-factory
+    run_id: wf_a9d5468f-60a
+    result: approved
+    round: 1
+    date: 2026-11-23
+  - workflow: ring-master-factory
+    run_id: wf_553aeef4-e64
+    result: approved
+    round: 1
+    date: 2026-11-23
+pr: https://github.com/Refactor-Circus/Keystone/pull/16

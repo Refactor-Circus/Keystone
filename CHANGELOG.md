@@ -2,6 +2,23 @@
 
 ## [Unreleased](https://github.com/Refactor-Circus/Keystone/compare/v0.1.1...main)
 
+### Breaking
+
+Released as v2.0.0, matching the rest of the suite: Keystone no longer names Atrium. Atrium hosts the suite's front ends and registers each package's UI itself.
+
+- `PackageServiceProvider::registerAtriumPlugin()` is removed. Atrium registers package UIs itself; drop the call from your provider's `boot()`.
+- The `{key}.ui.enabled` convention ends: Keystone no longer reads `ui.enabled`, so drop the `ui` key from your package config.
+- `Surface` has no built-in `atrium.` route prefix. Calls through `atrium.*` routes are no longer recorded as `atrium` but resolve like any other route name (`http` if a package registered the `atrium` key, else `code`, or `cli` in the console) unless the host names the surface itself with `Surface::route('atrium.', 'atrium')`.
+- Foundry, and any package that still calls `registerAtriumPlugin()`, stays on Keystone `^0.1` (v0.1.1) until it migrates. `dev-main` is now aliased to `2.0.x-dev`, so `^0.1` constraints never resolve `main`.
+
+### Added
+
+- An authorization contract packages ask instead of naming each other, under `RefactorCircus\Keystone\Authorization`: `Contracts\Permissions` (`allows()`, `scopesWith()`, `abilities()`, `isSuperAdmin()`, `forget()`, `SUPER_ADMIN`), `Contracts\Roles` (`available()`, `exists()`, `assign()`, `revoke()`, `revokeEverywhere()`, `of()`, `holders()`) and `Contracts\Scope` (`parentScope()`, `grantsByItself()`) for the models permissions are scoped to, walked with `ScopeChain::of()`.
+- Defaults bound with `singletonIf()`: `Permissions` is `GatePermissions`, which asks the host's Gate (abilities defined with `Gate::define()`, guests refused unless the gate accepts them) after a `Scope` chain's own rules, and guards against a `Gate::before()` callback asking it again; `Roles` is `NullRoles`, which stores nothing. A role store overrides them with `singleton()` or `scoped()` in its `register()`, in either provider order, and a decorator added with `extend()` survives the rebind.
+- `Abilities`: a registry packages fill from `boot()` with `define($ability, $description, $grantTo)`, read with `has()` and `all()`.
+- `Authorizer::allows()`: whether `$user` may use a named ability in `$scope`, answered by the bound `Permissions`, true while the package's `authorization` is off. `Policy::allowsAbility()` lets a policy ask the contract, guests included. `Authorizer::can()` and `Policy::allowsOn()` are unchanged.
+- `Testing\FakePermissions` and `Testing\FakeRoles`: in-memory implementations for package test suites, bound with `install()`, with `grant()`, `superAdmin()` and `define()`; they honour scope parents and `grantsByItself()` and work together in either install order.
+
 ## [v0.1.1](https://github.com/Refactor-Circus/Keystone/compare/v0.1.0...v0.1.1) - 2026-11-10
 
 ### Added
